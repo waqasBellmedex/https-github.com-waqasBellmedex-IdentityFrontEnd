@@ -8,6 +8,8 @@ import { SignupComponent } from './components/signup/signup.component';
 import {TranslateLoader, TranslateModule, TranslateService} from '@ngx-translate/core';
 import {TranslateHttpLoader} from '@ngx-translate/http-loader';
 import { FormsModule } from '@angular/forms';
+import { AccountService, API_BASE_URL } from './core/services/nswag/service-proxies';
+import { environment } from 'src/environments/environment';
 
 @NgModule({
   declarations: [
@@ -28,10 +30,16 @@ import { FormsModule } from '@angular/forms';
       }
   }),
   ],
-  providers: [TranslateService],
+  providers: [TranslateService,AccountService,
+    { provide: API_BASE_URL, useFactory: getRemoteServiceBaseUrl },
+  ],
+  
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+export function getRemoteServiceBaseUrl(): string {
+  return environment.apiUrl;
+}
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http);

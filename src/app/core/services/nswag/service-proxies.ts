@@ -17,10 +17,8 @@ import * as moment from 'moment';
 
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
-@Injectable({
-    providedIn: 'root'
-})
-export class Service {
+@Injectable()
+export class AccountService {
     private http: HttpClient;
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
@@ -35,7 +33,7 @@ export class Service {
      * @return Success
      */
     register(body: RegistrationRequest | undefined): Observable<Response> {
-        let url_ = this.baseUrl + "/Register";
+        let url_ = this.baseUrl + "/api/Account/Register";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -87,21 +85,21 @@ export class Service {
     }
 
     /**
-     * @param id (optional) 
+     * @param body (optional) 
      * @return Success
      */
-    get(id: number | undefined): Observable<ApplicationUser> {
-        let url_ = this.baseUrl + "/Get?";
-        if (id === null)
-            throw new Error("The parameter 'id' cannot be null.");
-        else if (id !== undefined)
-            url_ += "Id=" + encodeURIComponent("" + id) + "&";
+    get(body: GetUserRequestDto | undefined): Observable<ApplicationUser> {
+        let url_ = this.baseUrl + "/api/Account/Get";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(body);
+
         let options_ : any = {
+            body: content_,
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Content-Type": "application/json",
                 "Accept": "text/plain"
             })
         };
@@ -141,11 +139,70 @@ export class Service {
         }
         return _observableOf(null as any);
     }
+
+    /**
+     * @param token (optional) 
+     * @param userId (optional) 
+     * @return Success
+     */
+    confirm(token: string | undefined, userId: string | undefined): Observable<Response> {
+        let url_ = this.baseUrl + "/api/Account/confirm?";
+        if (token === null)
+            throw new Error("The parameter 'token' cannot be null.");
+        else if (token !== undefined)
+            url_ += "token=" + encodeURIComponent("" + token) + "&";
+        if (userId === null)
+            throw new Error("The parameter 'userId' cannot be null.");
+        else if (userId !== undefined)
+            url_ += "userId=" + encodeURIComponent("" + userId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processConfirm(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processConfirm(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Response>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Response>;
+        }));
+    }
+
+    protected processConfirm(response: HttpResponseBase): Observable<Response> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = Response.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
-@Injectable({
-    providedIn: 'root'
-})
+@Injectable()
 export class PatientService {
     private http: HttpClient;
     private baseUrl: string;
@@ -229,6 +286,7 @@ export class ApplicationUser implements IApplicationUser {
     lockoutEnd!: moment.Moment | undefined;
     lockoutEnabled!: boolean;
     accessFailedCount!: number;
+    isActive!: boolean;
     fullName!: string | undefined;
     isDeleted!: boolean;
     createdDate!: moment.Moment;
@@ -262,6 +320,7 @@ export class ApplicationUser implements IApplicationUser {
             this.lockoutEnd = _data["lockoutEnd"] ? moment(_data["lockoutEnd"].toString()) : <any>undefined;
             this.lockoutEnabled = _data["lockoutEnabled"];
             this.accessFailedCount = _data["accessFailedCount"];
+            this.isActive = _data["isActive"];
             this.fullName = _data["fullName"];
             this.isDeleted = _data["isDeleted"];
             this.createdDate = _data["createdDate"] ? moment(_data["createdDate"].toString()) : <any>undefined;
@@ -295,6 +354,7 @@ export class ApplicationUser implements IApplicationUser {
         data["lockoutEnd"] = this.lockoutEnd ? this.lockoutEnd.toISOString() : <any>undefined;
         data["lockoutEnabled"] = this.lockoutEnabled;
         data["accessFailedCount"] = this.accessFailedCount;
+        data["isActive"] = this.isActive;
         data["fullName"] = this.fullName;
         data["isDeleted"] = this.isDeleted;
         data["createdDate"] = this.createdDate ? this.createdDate.toISOString() : <any>undefined;
@@ -321,6 +381,7 @@ export interface IApplicationUser {
     lockoutEnd: moment.Moment | undefined;
     lockoutEnabled: boolean;
     accessFailedCount: number;
+    isActive: boolean;
     fullName: string | undefined;
     isDeleted: boolean;
     createdDate: moment.Moment;
@@ -362,6 +423,42 @@ export class GetPatientDto implements IGetPatientDto {
 }
 
 export interface IGetPatientDto {
+    id: number;
+}
+
+export class GetUserRequestDto implements IGetUserRequestDto {
+    id!: number;
+
+    constructor(data?: IGetUserRequestDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+        }
+    }
+
+    static fromJS(data: any): GetUserRequestDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetUserRequestDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        return data;
+    }
+}
+
+export interface IGetUserRequestDto {
     id: number;
 }
 

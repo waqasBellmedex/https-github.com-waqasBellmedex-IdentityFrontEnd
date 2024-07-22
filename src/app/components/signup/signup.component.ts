@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RegistrationRequest, Service } from 'src/app/core/services/nswag/service-proxies';
+import { AccountService, RegistrationRequest } from 'src/app/core/services/nswag/service-proxies';
 
 @Component({
   selector: 'app-signup',
@@ -9,11 +9,11 @@ import { RegistrationRequest, Service } from 'src/app/core/services/nswag/servic
 })
 export class SignupComponent {
 
-  constructor(public services : Service){}
+  constructor(public accountServices: AccountService) { }
   type: string = "password";
   isText: boolean = false;
   eyeIcon: string = "fa-eye-slash";
-  registrationdto : RegistrationRequest = new RegistrationRequest();
+  registrationdto: RegistrationRequest = new RegistrationRequest();
   hideshowPass() {
     this.isText = !this.isText;
     this.isText ? this.eyeIcon = "fa-eye" : this.eyeIcon = "fa-eye-slash";
@@ -22,11 +22,19 @@ export class SignupComponent {
 
 
 
-    submit(){
+  submit() {
+    debugger;
+    this.accountServices.register(this.registrationdto).subscribe(response => {
+      if (response.isSuccess) {
+debugger;
+      }
+      else {
 
-      debugger;
-      
-    }
+      }
+    });
+
+
+  }
 
 
 
