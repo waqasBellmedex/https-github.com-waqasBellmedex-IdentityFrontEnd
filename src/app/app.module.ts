@@ -10,6 +10,7 @@ import {TranslateHttpLoader} from '@ngx-translate/http-loader';
 import { FormsModule } from '@angular/forms';
 import { AccountService, API_BASE_URL } from './core/services/nswag/service-proxies';
 import { environment } from 'src/environments/environment';
+import { MessageService } from 'primeng/api';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,7 @@ import { environment } from 'src/environments/environment';
       }
   }),
   ],
-  providers: [TranslateService,AccountService,
+  providers: [TranslateService,AccountService,MessageService,
     { provide: API_BASE_URL, useFactory: getRemoteServiceBaseUrl },
   ],
   

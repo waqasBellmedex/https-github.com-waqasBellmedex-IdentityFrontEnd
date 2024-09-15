@@ -1,4 +1,7 @@
+<form #loginForm="ngForm" (submit)="loginForm.valid && submit()">
+    
 <div class="outer">
+    <p-toast class="custom-toast" position="bottom-right"></p-toast>
     <div class="container">
         <div class="row">
             <div class="offset-md-2 col-lg-5 col-md-7 offset-lg-4 offset-md-3">
@@ -7,11 +10,13 @@
                         <h3 class="pt-3 font-weight-bold">{{'LOGIN.HEADER' | translate}}</h3>
                     </div>
                     <div class="panel-body p-3">
-                        <form>
+                    
                             <div class="form-group pt-3">
                                 <div class="input-field">
                                     <span class="fa fa-user p-2"> </span>
-                                    <input type="text" placeholder="UserName">
+                                    <input type="text" [placeholder]="'LOGIN.USERNAME' | translate" [(ngModel)]="loginRequest.username" name ="userName"
+                                    #name = "ngModel" required
+                                    [ngClass]="{'border-danger': loginForm.submitted && name.invalid}">
 
                                 </div>
                             </div>
@@ -19,7 +24,8 @@
                             <div class="form-group pt-3">
                                 <div class="input-field">
                                     <span class="fa fa-lock p-2"> </span>
-                                    <input [type]="type" placeholder="Password">
+                                    <input [type]="type" [placeholder]="'LOGIN.PASSWORD' | translate" [(ngModel)]="loginRequest.password" name ="password"
+                                    #password = "ngModel" required>
                                     <span (click)="hideshowPass()" class="fa {{eyeIcon}}"></span>
                                 </div>
                             </div>
@@ -29,11 +35,11 @@
                             <button type="submit" class="btn btn-primary btn-block mt-4 w-100">Login</button>
 
                             <div class="text-center pt-4 text-muted"> Dont have account? <a id="forget"
-                                    routerLink="/signup">Sign Up</a></div>
-                        </form>
+                                    routerLink="/signup">{{'SIGNUP.HEADER' | translate}}</a></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+</form>

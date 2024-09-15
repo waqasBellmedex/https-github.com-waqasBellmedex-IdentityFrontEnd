@@ -200,6 +200,62 @@ export class AccountService {
         }
         return _observableOf(null as any);
     }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    login(body: AuthenticationRequest | undefined): Observable<AuthenticationResponseResponse> {
+        let url_ = this.baseUrl + "/api/Account/Login";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processLogin(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processLogin(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AuthenticationResponseResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AuthenticationResponseResponse>;
+        }));
+    }
+
+    protected processLogin(response: HttpResponseBase): Observable<AuthenticationResponseResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AuthenticationResponseResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 @Injectable()
@@ -390,6 +446,170 @@ export interface IApplicationUser {
     modifiedBy: string | undefined;
 }
 
+export class AuthenticationRequest implements IAuthenticationRequest {
+    username!: string | undefined;
+    password!: string | undefined;
+
+    constructor(data?: IAuthenticationRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.username = _data["username"];
+            this.password = _data["password"];
+        }
+    }
+
+    static fromJS(data: any): AuthenticationRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new AuthenticationRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["username"] = this.username;
+        data["password"] = this.password;
+        return data;
+    }
+}
+
+export interface IAuthenticationRequest {
+    username: string | undefined;
+    password: string | undefined;
+}
+
+export class AuthenticationResponse implements IAuthenticationResponse {
+    id!: number;
+    fullName!: string | undefined;
+    email!: string | undefined;
+    dob!: moment.Moment | undefined;
+    username!: string | undefined;
+    token!: string | undefined;
+    roles!: string[] | undefined;
+
+    constructor(data?: IAuthenticationResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.fullName = _data["fullName"];
+            this.email = _data["email"];
+            this.dob = _data["dob"] ? moment(_data["dob"].toString()) : <any>undefined;
+            this.username = _data["username"];
+            this.token = _data["token"];
+            if (Array.isArray(_data["roles"])) {
+                this.roles = [] as any;
+                for (let item of _data["roles"])
+                    this.roles!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): AuthenticationResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new AuthenticationResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["fullName"] = this.fullName;
+        data["email"] = this.email;
+        data["dob"] = this.dob ? this.dob.toISOString() : <any>undefined;
+        data["username"] = this.username;
+        data["token"] = this.token;
+        if (Array.isArray(this.roles)) {
+            data["roles"] = [];
+            for (let item of this.roles)
+                data["roles"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IAuthenticationResponse {
+    id: number;
+    fullName: string | undefined;
+    email: string | undefined;
+    dob: moment.Moment | undefined;
+    username: string | undefined;
+    token: string | undefined;
+    roles: string[] | undefined;
+}
+
+export class AuthenticationResponseResponse implements IAuthenticationResponseResponse {
+    isSuccess!: boolean;
+    message!: string | undefined;
+    errors!: string[] | undefined;
+    result!: AuthenticationResponse;
+
+    constructor(data?: IAuthenticationResponseResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.isSuccess = _data["isSuccess"];
+            this.message = _data["message"];
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(item);
+            }
+            this.result = _data["result"] ? AuthenticationResponse.fromJS(_data["result"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): AuthenticationResponseResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new AuthenticationResponseResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["isSuccess"] = this.isSuccess;
+        data["message"] = this.message;
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item);
+        }
+        data["result"] = this.result ? this.result.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IAuthenticationResponseResponse {
+    isSuccess: boolean;
+    message: string | undefined;
+    errors: string[] | undefined;
+    result: AuthenticationResponse;
+}
+
 export class GetPatientDto implements IGetPatientDto {
     id!: number;
 
@@ -552,8 +772,8 @@ export interface IRegistrationRequest {
 
 export class Response implements IResponse {
     isSuccess!: boolean;
-    message!: string | undefined;
     errors!: string[] | undefined;
+    message!: string | undefined;
 
     constructor(data?: IResponse) {
         if (data) {
@@ -567,12 +787,12 @@ export class Response implements IResponse {
     init(_data?: any) {
         if (_data) {
             this.isSuccess = _data["isSuccess"];
-            this.message = _data["message"];
             if (Array.isArray(_data["errors"])) {
                 this.errors = [] as any;
                 for (let item of _data["errors"])
                     this.errors!.push(item);
             }
+            this.message = _data["message"];
         }
     }
 
@@ -586,20 +806,20 @@ export class Response implements IResponse {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["isSuccess"] = this.isSuccess;
-        data["message"] = this.message;
         if (Array.isArray(this.errors)) {
             data["errors"] = [];
             for (let item of this.errors)
                 data["errors"].push(item);
         }
+        data["message"] = this.message;
         return data;
     }
 }
 
 export interface IResponse {
     isSuccess: boolean;
-    message: string | undefined;
     errors: string[] | undefined;
+    message: string | undefined;
 }
 
 export class ApiException extends Error {

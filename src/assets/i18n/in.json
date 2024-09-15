@@ -1,6 +1,8 @@
 {
     "LOGIN":{
-        "HEADER" : "LOGIN"
+        "HEADER" : "LOGIN",
+        "USERNAME": "Username",
+        "PASSWORD" : "Password"
     },
     "SIGNUP":{
         "HEADER" : "Sign Up"
