@@ -1,0 +1,28 @@
+<div class="main-container">
+    <!-- Side Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>My App</h2>
+      </div>
+      <ul class="nav-links">
+        <li><a routerLink="/main-page/dashboard" routerLinkActive="active" class="nav-item">Dashboard</a></li>
+        <li><a routerLink="/main-page/tasks" routerLinkActive="active" class="nav-item">Tasks</a></li>
+        <li><a href="#" class="nav-item">Settings</a></li>
+        <li><a href="#" class="nav-item">Messages</a></li>
+        <li><a href="#" class="nav-item">Notifications</a></li>
+        <li><a href="#" class="nav-item">Logout</a></li>
+      </ul>
+    </aside>
+  
+    <!-- Main Content -->
+    <main class="content">
+      <header class="content-header">
+        <h1>Welcome to My App</h1>
+      </header>
+      <section class="content-body">
+        <!-- Placeholder for dynamically loaded content -->
+        <router-outlet></router-outlet>
+      </section>
+    </main>
+  </div>
+  

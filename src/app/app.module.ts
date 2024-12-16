@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import{HttpClient, HttpClientModule} from'@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
@@ -11,18 +11,33 @@ import { FormsModule } from '@angular/forms';
 import { AccountService, API_BASE_URL } from './core/services/nswag/service-proxies';
 import { environment } from 'src/environments/environment';
 import { MessageService } from 'primeng/api';
+import { RouterModule } from '@angular/router'; 
+import { MainPageComponent } from './components/main-page/main-page.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { TasksComponent } from './components/tasks/tasks.component';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { MenuModule } from 'primeng/menu';
+
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
-    SignupComponent
+    SignupComponent,
+    MainPageComponent,
+    DashboardComponent,
+    TasksComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
+    RouterModule,
     HttpClientModule,
     FormsModule,
+    TableModule,
+    ButtonModule,
+    MenuModule,
     TranslateModule.forRoot({
       loader: {
           provide: TranslateLoader,
@@ -35,7 +50,9 @@ import { MessageService } from 'primeng/api';
     { provide: API_BASE_URL, useFactory: getRemoteServiceBaseUrl },
   ],
   
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  schemas: [NO_ERRORS_SCHEMA] 
+  
 })
 export class AppModule { }
 export function getRemoteServiceBaseUrl(): string {

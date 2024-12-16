@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
 import { AccountService, AuthenticationRequest } from 'src/app/core/services/nswag/service-proxies';
@@ -16,7 +17,8 @@ export class LoginComponent {
   loginRequest: AuthenticationRequest = new AuthenticationRequest();
   constructor(private translationService: TranslateService,
     private messageService: MessageService,
-    private accountService: AccountService
+    private accountService: AccountService,
+    private router:Router
   ) {
 
   }
@@ -26,13 +28,14 @@ export class LoginComponent {
     this.isText ? this.type = "text" : this.type = "password"
   }
   submit() {
-    debugger;
-    this.accountService.login(this.loginRequest).subscribe(response => {
-      if (response) {
-        debugger;
-      //  this.messageService.add({severity: 'success',summary:'success',detail:this.translationService.instant('LOGIN.LOGINSUCCESS')})
-      }
-    })
+    this.router.navigate(['/main-page']);
+    // this.accountService.login(this.loginRequest).subscribe(response => {
+    //   if (response) {
+    //     debugger;
+    //     this.router.navigate(['/map']);
+    //   //  this.messageService.add({severity: 'success',summary:'success',detail:this.translationService.instant('LOGIN.LOGINSUCCESS')})
+    //   }
+    // })
   }
 }
 
